@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#F7F4EF" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -12,7 +12,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-</div>
   <script>
     tailwind.config = {
       theme: {
@@ -58,24 +57,34 @@
       font-family: 'Cormorant Garamond', serif;
       font-weight: 600;
     }
-    html, body {
+    html {
+      height: auto;
+      min-height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+    }
+    body {
+      min-height: 100%;
+      height: auto;
       background-color: #161412;
       color: var(--ink);
+      overflow-y: visible;
       overflow-x: hidden;
-      overscroll-behavior-y: none;
+      -webkit-overflow-scrolling: touch;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      touch-action: pan-y;
     }
     #mobile-app-shell {
       width: 100%;
       max-width: 430px;
-      min-height: 100svh;
+      min-height: 100dvh;
       margin: 0 auto;
       background-color: var(--bg);
       position: relative;
-      padding-bottom: calc(78px + env(safe-area-inset-bottom));
+      padding-bottom: calc(82px + env(safe-area-inset-bottom));
       box-shadow: 0 0 60px rgba(0, 0, 0, 0.45);
-      overflow-x: clip;
     }
     .mobile-fixed-frame {
       width: 100%;
@@ -327,7 +336,7 @@
 
       <div class="w-full">
         <div class="w-full h-[260px] rounded-2xl overflow-hidden border hairline">
-          <iframe title="Al-Yasmin Map" class="w-full h-full border-0" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=36.3020%2C33.5080%2C36.3140%2C33.5160&amp;layer=mapnik&amp;marker=33.5116%2C36.3082"></iframe>
+          <iframe title="Al-Yasmin Map" style="touch-action: pan-y;" class="w-full h-full border-0" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=36.3020%2C33.5080%2C36.3140%2C33.5160&amp;layer=mapnik&amp;marker=33.5116%2C36.3082"></iframe>
         </div>
       </div>
     </div>
@@ -433,6 +442,7 @@
 
   <!-- Toast -->
   <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden max-w-[390px] w-max px-5 py-2.5 bg-espresso text-alabaster text-xs rounded-full shadow-lg text-center"></div>
+</div>
 
   <script>
     const I18N = {
@@ -719,8 +729,11 @@
       `;
     }
 
-    function openCartDrawer() { document.getElementById('cart-drawer').classList.remove('hidden'); }
-    function closeCartDrawer() { document.getElementById('cart-drawer').classList.add('hidden'); }
+    function lockBodyScroll(lock) {
+      document.body.style.overflow = lock ? 'hidden' : '';
+    }
+    function openCartDrawer() { document.getElementById('cart-drawer').classList.remove('hidden'); lockBodyScroll(true); }
+    function closeCartDrawer() { document.getElementById('cart-drawer').classList.add('hidden'); lockBodyScroll(false); }
 
     function checkoutOrder() {
       const code = 'YSM-' + Math.floor(100000 + Math.random() * 900000);
@@ -764,9 +777,11 @@
     function openReservationModal() {
       resetReservation('modal');
       document.getElementById('res-modal').classList.remove('hidden');
+      lockBodyScroll(true);
     }
     function closeReservationModal() {
       document.getElementById('res-modal').classList.add('hidden');
+      lockBodyScroll(false);
     }
 
     function renderGallery() {
@@ -781,8 +796,9 @@
       lightboxIdx = i;
       updateLightbox();
       document.getElementById('lightbox').classList.remove('hidden');
+      lockBodyScroll(true);
     }
-    function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); }
+    function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); lockBodyScroll(false); }
     function stepLightbox(dir) {
       lightboxIdx = (lightboxIdx + dir + GALLERY.length) % GALLERY.length;
       updateLightbox();
@@ -840,6 +856,25 @@
       renderTimeSlots('inline');
       renderTimeSlots('modal');
       applyLanguage();
+      // Reliable smooth scrolling for anchor links on mobile
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          const targetId = this.getAttribute('href');
+          if (targetId && targetId.length > 1) {
+            const targetEl = document.querySelector(targetId);
+            if (targetEl) {
+              e.preventDefault();
+              lockBodyScroll(false);
+              const headerOffset = 68;
+              const elementPosition = targetEl.getBoundingClientRect().top + window.scrollY;
+              window.scrollTo({
+                top: Math.max(0, elementPosition - headerOffset),
+                behavior: 'smooth'
+              });
+            }
+          }
+        });
+      });
     });
   </script>
 </body>
